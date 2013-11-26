@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <title>Forklikft Monitor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+	<link href="{{static_url('css/bootstrap-flatly.css')}}" rel="stylesheet">
+	<link href="{{static_url('css/bootstrap-datetimepicker.min.css')}}" rel="stylesheet">
+	<link href="{{static_url('css/bootstrap-flatly-glyphicons.css')}}" rel="stylesheet">
+	
+	<style>
+		body{
+			margin-top:50px;
+			font-size:25px;
+		}
+		a{
+			font-size:25px;
+		}
+		
+	</style>
+  </head>
+<!-- /HEAD-->
+  <body data-spy="scroll">
+ 
+ 	<div class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="../" class="navbar-brand" style="font-size:30px;">Raymond</a>
+          <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+        </div>
+        <div class="navbar-collapse collapse" id="navbar-main">
+          <ul class="nav navbar-nav pull-right">
+          	<li>
+            	<a href="/audit">Audit</a>
+            </li>
+            <li class="dropdown">
+              <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="themes">{{current_user['username']}} <span class="caret"></span></a>
+              <ul class="dropdown-menu" aria-labelledby="themes">
+                <li><a href="/logout">logout</a></li>
+              </ul>
+            </li>
+          <ul>
+
+          
+        </div>
+      </div>
+    </div>
+    <div class="container">
+
+      <div class="row">
+      
+        <div class="col-lg-12">
+          <h1 class="page-header">Maintainence <small> monitor & schedule</small></h1>
+        </div>
+
+      </div>
+	  
+      <div class="row" id="forklifts">
+        <!--div class="col-lg-6 col-md-6">
+         
+        </div>
+		<div class="col-lg-6 col-md-6">
+          <h2>Forklift One</h2>
+          <a class="btn btn-primary btn-lg reset" href="/reset/{{!tagNum}}">Perform Maintainence &nbsp;<span class="glyphicon glyphicon-wrench"></span></a>
+        </div-->
+
+      </div>
+
+      <hr>
+
+      
+      <div class="row text-center">
+        
+        <div class="col-lg-12">
+          <ul class="pagination">
+            <li><a href="#">&laquo;</a></li>
+            <li class="active"><a href="#">1</a></li>
+            <li><a href="#">2</a></li>
+            <li><a href="#">3</a></li>
+            <li><a href="#">4</a></li>
+            <li><a href="#">5</a></li>
+            <li><a href="#">&raquo;</a></li>
+          </ul>        
+        </div>
+
+      </div>
+
+      <hr>
+
+      <footer>
+        <div class="row">
+          <div class="col-lg-12">
+            <p class="text-muted">Copyright &copy; AATSI 2013</p>
+          </div>
+        </div>
+      </footer>
+      
+    </div><!-- /.container -->
+
+
+	<script type="text/handlebar-template" id="forklift-template">
+	<div class="row">
+		<div class="col-lg-6 col-md-6" id="graph{{!tagNum}}">
+         
+        </div>
+		<div class="col-lg-6 col-md-6">
+          <h2>{{!name}}</h2>
+          <a class="btn btn-primary btn-lg reset" href="/reset/{{!tagNum}}">Perform Maintainence &nbsp;<span class="glyphicon glyphicon-wrench"></span></a>
+        </div>
+    </div>
+	</script>
+
+
+
+   
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+	<!-- Latest compiled and minified JavaScript -->
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>    	
+	
+	<script src="{{static_url('js/bootstrap.js')}}"></script>
+	<script src="{{static_url('js/holder.js')}}"></script>
+	<script src="{{static_url('js/d3.min.js')}}"></script>
+	<script src="{{static_url('js/moment.min.js')}}"></script>	
+	<script src="{{static_url('js/bootstrap-datetimepicker.js')}}"></script>	
+	<script src="{{static_url('js/handlebars.js')}}" type="text/javascript" ></script>
+	<script type="text/javascript">
+		$(document).ready(function(){
+			//compile templates
+			templates = {};
+			templates['forklift'] = Handlebars.compile($('#forklift-template').html());
+			
+		    var degree = Math.PI/180;
+		    var width = 600,
+		        height = 350,
+		        radius = Math.min(width, height) / 2;
+		    var pie = d3.layout.pie().startAngle(-115*degree).endAngle(115*degree)
+		        .sort(null);
+		    
+		    var arc = d3.svg.arc()
+		        .innerRadius(80)
+		        .outerRadius(150);
+		    var colors = ['#95a5a6','#2c3e50', '#18bc9c','#ecf0f1','#e74c3c','#3498db','#f39c12',];
+		    var color = function(i){
+		    		return colors[i%(colors.length)];
+		    		console.log(i);
+			}
+		    /*tween the percent text as values change*/
+		    function arcTween(a) {
+			  var i = d3.interpolate(this._current, a);
+			  this._current = i(0);
+			  return function(t) {
+			    return arc(i(t));
+			  };
+			}
+			var tags = {};
+		    
+		    var appendTemplate = function(tagNum){
+		    	$('#forklifts').append(templates['forklift']({
+		    		'tagNum':tagNum,
+		    		'name':tagNum
+		    		}));
+		    }
+		    
+			var drawGraph = function(tagNum,data){
+				var container = d3.select("#graph"+tagNum).append("svg")
+		        .attr("width", width)
+		        .attr("height", height);
+		    	var svg = container.append("g")
+		        .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+		
+			
+		    	var path = svg.selectAll("path")
+		        .data(pie(data))
+		      	.enter().append("path")
+		        .attr("fill", function(d, i) { return color(i); })
+		        .attr("d", arc)
+		        .each(function(d) { 
+		        	console.log(d);
+		        this._current = d; })
+		        .on("dblclick", function(d){ alert(d); })
+			    .on("mouseover", function(d){
+			    	console.log("mouse over"+d);
+			    })
+			    .on("mouseout", function(d){
+			    	console.log("mouse out"+d);
+			    }); // store the initial values;
+			    
+				var total = 0;
+			    for(var i=0;i<3; i++){
+			    	total += data[i];
+			    }
+				var textGroup = container.append("g");
+				textGroup.data([total])
+				.append("text")
+				.attr("font-family", "Lato")
+				.attr("font-size", "50px")
+				.attr("y",170)
+				.text(function(d){ 
+					console.log(d);
+					return d;
+				});
+			    		
+			}
+			
+			var updateGraph = function(tagNum,data){   
+				var svg = d3.select("#graph"+tagNum+" svg");  
+			    
+			    
+			    svg.selectAll("path")
+			        .data(pie(data))
+			    .transition()
+			    .duration(2500)
+			        .attrTween("d", arcTween);
+			   	var total = 0;
+			    for(var i=0;i<3; i++){
+			    	total += data[i];
+			    }
+			    console.log(total);
+			    svg.selectAll("text")
+			      .data([total])
+			      .transition()
+			      .duration(2500)
+			      .ease("cubic")
+				  .tween("text", function(d,i,a){
+			      	var i = d3.interpolate(this.textContent,d);
+			      	return function(t){
+			      		this.textContent = Math.round(i(t));
+			      	};
+		      	});   
+			    
+			}
+			
+			//reset handler 
+			
+			$( "#forklifts" ).delegate( ".reset", "click", function(e) {
+			  e.preventDefault();
+			  var url = $( this )[0].href;
+			  $.ajax({
+				  type: "GET",
+				  url: url,
+				  success: function(data){
+				  	//TODO allow button to be clicked
+				  },
+				});
+			});
+			
+			/*ui testing functions 
+			
+			function dummyData(){
+			    var tagNum= 164 + Math.floor(Math.random() * 3);
+			    percentValue = Math.random()*100;
+			    data = [Math.random() * 100, Math.random() * 100,Math.random() * 100];			    
+			    updateGraph(tagNum,data);
+			};
+			
+			window.setInterval(dummyData, 2000);*/
+		    
+		   
+		   			    
+		   
+		    var calculateTimers = function(counterDict,n){
+		    	
+		    	return (counterDict['counter'+n] - counterDict['reset'+n])*15 + counterDict['generation'+n] * 11*86400;
+		    }
+		    
+		    var handle = function(data){	
+				try{
+					var MAX = 0.1*86400;
+				
+					for(var d in data){
+						var tagData = data[d];
+						var temp = [];
+						for(var i = 1; i < 4; i++){
+							var timer = calculateTimers(tagData,i) 
+							MAX-=timer;
+							temp.push(timer);
+						}
+						temp.push(MAX);
+						if(!tags.hasOwnProperty(tagData['tagNum'])){
+							appendTemplate(tagData['tagNum']);
+							drawGraph(tagData['tagNum'],temp);
+							tags[tagData['tagNum']] = tagData;					
+						}else{
+							updateGraph(tagData['tagNum'],temp);
+						}
+					}					
+        		}
+        		catch (err){
+        			
+        		}
+			};
+			
+			var ws = new WebSocket('ws://'+window.location.href.split('/')[2]+'/update');
+			var start = function(){
+				ws.onopen = function()
+			    {
+			
+				};
+			    ws.onmessage = function (event) 
+			    { 
+			     try{
+			     		var buffer = $.parseJSON(event.data);		     		
+			     		if(buffer && buffer !== '' && isNaN(parseInt(buffer,16))){
+			     			handle(buffer);
+			     		}	
+			     		
+			       }catch(err)
+			       {
+					  uptime.html("socket error:"+err.message);
+			       }
+			    };
+			    ws.onclose = function()
+			    { 			    	
+			    	uptime.html('offline');
+			    };
+		   }//end start
+		    
+		   
+		   start();
+		});
+	</script>
+
+</body>
+</html>
+
+
