@@ -137,6 +137,27 @@
 	<script type="text/javascript">
 		$(document).ready(function(){
 			//compile templates
+			
+			String.prototype.toHuman = function () {
+			    var sec_num = parseInt(this, 10); // don't forget the second parm
+			    var hours   = Math.floor(sec_num / 3600);
+			    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+			    var seconds = sec_num - (hours * 3600) - (minutes * 60);
+			
+			    if (hours   < 10) {hours   = "0"+hours;}
+			    if (minutes < 10) {minutes = "0"+minutes;}
+			    if (seconds < 10) {seconds = "0"+seconds;}
+			    var time    = hours+':'+minutes+':'+seconds;
+			    return time;
+			}
+			
+			String.prototype.toMachine = function(){
+				var format = this.split(':');
+				if(format.length ==3){
+					return parseFloat(format[0])*3600 + parseFloat(format[1])*60 + parseFloat(format[2]);
+				}
+			}
+			
 			templates = {};
 			templates['forklift'] = Handlebars.compile($('#forklift-template').html());
 			
@@ -208,7 +229,7 @@
 				.attr("y",170)
 				.text(function(d){ 
 					console.log(d);
-					return d;
+					return (d+"").toHuman();
 				});
 			    		
 			}
@@ -233,9 +254,10 @@
 			      .duration(2500)
 			      .ease("cubic")
 				  .tween("text", function(d,i,a){
-			      	var i = d3.interpolate(this.textContent,d);
+				  	var oldTime = this.textContent.toMachine()
+			      	var i = d3.interpolate(oldTime,d);
 			      	return function(t){
-			      		this.textContent = Math.round(i(t));
+			      		this.textContent = (Math.round(i(t))+"").toHuman();
 			      	};
 		      	});   
 			    
@@ -276,7 +298,7 @@
 		    
 		    var handle = function(data){	
 				try{
-					var MAX = 0.1*86400;
+					var MAX = 500 * 3600;
 				
 					for(var d in data){
 						var tagData = data[d];
