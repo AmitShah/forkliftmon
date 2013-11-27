@@ -221,7 +221,7 @@
 			    for(var i=0;i<3; i++){
 			    	total += data[i];
 			    }
-				var textGroup = container.append("g");
+				var textGroup = container.append("g") .attr("transform", "translate(200,100)");;
 				textGroup.data([total])
 				.append("text")
 				.attr("font-family", "Lato")
